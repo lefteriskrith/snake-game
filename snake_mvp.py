@@ -1,38 +1,18 @@
 import pygame
-import random
 import sys
-
-# ------------- Settings -------------
-# Μέγεθος αρχικών κελιών (pixels)
-# Μεγαλύτερο παράθυρο και πιο ευκρινή φιδάκια.
-CELL_SIZE = 24
-
-# Πόσα κελιά οριζόντια και κάθετα
-GRID_WIDTH = 34
-GRID_HEIGHT = 24
-
-# Αρχική ταχύτητα frame rate
-FPS = 6
-
-# ------------- Colors -------------
-COLOR_BG = (0, 0, 0)
-COLOR_SNAKE = (46, 204, 113)
-COLOR_FOOD = (231, 76, 60)
-COLOR_TEXT = (236, 240, 241)
-
-# ------------- Helper Functions -------------
-
-def draw_text(surface, text, size, x, y):
-    font = pygame.font.SysFont(None, size)
-    text_img = font.render(text, True, COLOR_TEXT)
-    surface.blit(text_img, (x, y))
-
-
-def random_food_position(snake):
-    while True:
-        pos = (random.randint(0, GRID_WIDTH - 1), random.randint(0, GRID_HEIGHT - 1))
-        if pos not in snake:
-            return pos
+from snake_core import (
+    CELL_SIZE,
+    GRID_WIDTH,
+    GRID_HEIGHT,
+    FPS,
+    COLOR_BG,
+    draw_text,
+    random_food_position,
+    draw_snake,
+    draw_food,
+    draw_walls,
+    check_wall_collision,
+)
 
 # ------------- Main Game Loop -------------
 
@@ -68,35 +48,26 @@ def main():
         if not game_over:
             head = (snake[0][0] + direction[0], snake[0][1] + direction[1])
 
-            # wrap around (εικόνα "στο δρόμο")
-            head = (head[0] % GRID_WIDTH, head[1] % GRID_HEIGHT)
-
-            # σύγκρουση με τον εαυτό του
-            if head in snake:
+            # σύγκρουση με τοίχο
+            if check_wall_collision(head):
                 game_over = True
-
-            snake.insert(0, head)
-
-            if head == food:
-                score += 1
-                food = random_food_position(snake)
+            # σύγκρουση με το σώμα
+            elif head in snake:
+                game_over = True
             else:
-                snake.pop()
+                snake.insert(0, head)
+
+                if head == food:
+                    score += 1
+                    food = random_food_position(snake)
+                else:
+                    snake.pop()
 
         # ------------- Draw -------------
         screen.fill(COLOR_BG)
-
-        # Σχέδιο φαγητού (κύκλος για πιο "φιδίσιο" look)
-        food_center = (food[0] * CELL_SIZE + CELL_SIZE // 2, food[1] * CELL_SIZE + CELL_SIZE // 2)
-        food_radius = CELL_SIZE // 2 - 2
-        pygame.draw.circle(screen, COLOR_FOOD, food_center, food_radius)
-
-        # Σχέδιο φιδιού (στρογγυλές διαστάσεις και μικρό offset για smooth)
-        snake_radius = CELL_SIZE // 2 - 2
-        for segment in snake:
-            segment_center = (segment[0] * CELL_SIZE + CELL_SIZE // 2, segment[1] * CELL_SIZE + CELL_SIZE // 2)
-            pygame.draw.circle(screen, COLOR_SNAKE, segment_center, snake_radius)
-
+        draw_walls(screen)
+        draw_food(screen, food)
+        draw_snake(screen, snake)
 
         draw_text(screen, f"Score: {score}", 28, 8, GRID_HEIGHT * CELL_SIZE + 4)
 
