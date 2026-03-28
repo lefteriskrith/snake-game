@@ -1,4 +1,4 @@
-# Snake Game
+# snake-game
 
 Simple Python `pygame` snake game (MVP), private repo: `snake-game`.
 
@@ -31,7 +31,7 @@ pip install pygame
 Run:
 
 ```bash
-python snake_mvp.py
+python skate_game.py
 ```
 
 ## Changelog
