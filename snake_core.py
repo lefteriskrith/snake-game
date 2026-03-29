@@ -6,8 +6,8 @@ from pygame import gfxdraw
 
 # ------------- Settings -------------
 CELL_SIZE = 28
-GRID_WIDTH = 34
-GRID_HEIGHT = 24
+GRID_WIDTH = 32
+GRID_HEIGHT = 22
 HUD_HEIGHT = 92
 BASE_FPS = 8
 MAX_FPS = 17
@@ -44,7 +44,7 @@ def draw_text(surface, text, size, x, y, color=COLOR_TEXT, bold=False):
 def random_food_position(snake, blocked=None):
     blocked = blocked or set()
     while True:
-        pos = (random.randint(1, GRID_WIDTH - 2), random.randint(1, GRID_HEIGHT - 2))
+        pos = (random.randint(0, GRID_WIDTH - 1), random.randint(0, GRID_HEIGHT - 1))
         if pos not in snake and pos not in blocked:
             return pos
 
@@ -192,4 +192,4 @@ def draw_overlay(surface, title, subtitle):
 
 def check_wall_collision(pos):
     x, y = pos
-    return x <= 0 or x >= GRID_WIDTH - 1 or y <= 0 or y >= GRID_HEIGHT - 1
+    return x < 0 or x >= GRID_WIDTH or y < 0 or y >= GRID_HEIGHT

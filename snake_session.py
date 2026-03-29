@@ -6,8 +6,8 @@ from snake_core import BASE_FPS, MAX_FPS, random_food_position
 @dataclass(frozen=True)
 class Difficulty:
     label: str
-    base_speed: int
-    max_speed: int
+    base_speed: float
+    max_speed: float
 
 
 @dataclass
@@ -34,7 +34,7 @@ class GameState:
 
 
 DIFFICULTIES = {
-    "easy": Difficulty("Easy", 3, 7),
+    "easy": Difficulty("Easy", 1.5, 3.5),
     "medium": Difficulty("Medium", 6, 14),
     "hard": Difficulty("Hard", BASE_FPS, MAX_FPS),
 }
