@@ -1,24 +1,32 @@
-# snake-game
+# Snakey
 
-Simple Python `pygame` snake game (MVP), private repo: `snake-game`.
+Simple `pygame` snake game with:
 
-## Features
+- Smooth snake movement
+- Difficulty selection (`Easy`, `Medium`, `Hard`)
+- Menu with resume/new game flow
+- Apple food, score, best score, and speed HUD
 
-- Snake moves on a grid
-- Food appears as a red apple with stem and shine
-- Game over when snake hits the wall or itself (no wrapping)
-- Score display
-- Restart with `R`
+## Files
+
+- `snake_game.py`: main loop, input handling, audio, and state transitions
+- `snake_core.py`: drawing, board constants, HUD, overlays, and visual helpers
+- `snake_session.py`: difficulty presets, game state, and run/session helpers
+- `snake_audio.py`: sound effects and music helpers
 
 ## Controls
 
-- Arrow keys: move
-- R: restart after game-over
+- `WASD` or arrow keys: move
+- `P`: pause
+- `ESC`: open menu
+- `SPACE` or `Enter`: start/resume from menu
+- `R`: start a new game
+- `1`, `2`, `3`: choose difficulty in menu
 
 ## Requirements
 
 - Python 3.10+
-- pygame
+- `pygame`
 
 Install:
 
@@ -26,20 +34,8 @@ Install:
 pip install pygame
 ```
 
-## Development
-
 Run:
 
 ```bash
-python skate_game.py
+python snake_game.py
 ```
-
-## Changelog
-
-### 2026-03-28
-- Added `snake_core.py` module for game logic & rendering helpers
-- Implemented wall collision (no wall-wrapping)
-- Updated snake rendering to nice circles
-- Updated food to red apple style
-- Added `draw_walls` and game-over logic
-- Added README and repository setup instructions
