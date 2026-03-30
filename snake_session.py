@@ -24,11 +24,24 @@ class GameState:
     tick: int = 0
     difficulty: str = "easy"
     menu_resume_available: bool = False
+    mode: str = "classic"
+    vs_red_snake: list[tuple[int, int]] = field(default_factory=list)
+    vs_red_direction: tuple[int, int] = (1, 0)
+    vs_red_pending_direction: tuple[int, int] = (1, 0)
+    vs_red_previous_snake: list[tuple[int, int]] = field(default_factory=list)
+    vs_green_snake: list[tuple[int, int]] = field(default_factory=list)
+    vs_green_direction: tuple[int, int] = (0, 1)
+    vs_green_pending_direction: tuple[int, int] = (0, 1)
+    vs_green_previous_snake: list[tuple[int, int]] = field(default_factory=list)
+    vs_winner: str = ""
+    vs_survival_time: float = 0.0
 
     def current_settings(self):
         return DIFFICULTIES[self.difficulty]
 
     def current_speed(self):
+        if self.mode == "vs":
+            return DIFFICULTIES["easy"].base_speed + 0.5
         settings = self.current_settings()
         return min(settings.max_speed, settings.base_speed + self.score // 4)
 
@@ -51,8 +64,17 @@ def start_new_run():
     return snake, direction, food, score, direction, 0.0
 
 
-def build_game_state(difficulty="easy", best_score=0):
+def reset_vs_game():
+    red_snake = [(7, 6), (6, 6), (5, 6)]
+    green_snake = [(24, 15), (24, 14), (24, 13)]
+    return red_snake, (1, 0), green_snake, (0, 1)
+
+
+def build_game_state(difficulty="easy", best_score=0, mode="classic"):
     snake, direction, food, score, pending_direction, move_timer = start_new_run()
+    red_snake, red_direction, green_snake, green_direction = reset_vs_game()
+    if mode == "vs":
+        food = random_food_position(red_snake, blocked=set(green_snake))
     return GameState(
         snake=snake,
         direction=direction,
@@ -63,6 +85,15 @@ def build_game_state(difficulty="easy", best_score=0):
         previous_snake=list(snake),
         best_score=best_score,
         difficulty=difficulty,
+        mode=mode,
+        vs_red_snake=red_snake,
+        vs_red_direction=red_direction,
+        vs_red_pending_direction=red_direction,
+        vs_red_previous_snake=list(red_snake),
+        vs_green_snake=green_snake,
+        vs_green_direction=green_direction,
+        vs_green_pending_direction=green_direction,
+        vs_green_previous_snake=list(green_snake),
     )
 
 

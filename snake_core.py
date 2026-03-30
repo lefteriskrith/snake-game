@@ -26,6 +26,9 @@ COLOR_PANEL_BORDER = (90, 141, 108)
 COLOR_SNAKE = (70, 214, 123)
 COLOR_SNAKE_HEAD = (153, 255, 196)
 COLOR_SNAKE_SHADOW = (10, 40, 20, 90)
+COLOR_RED_SNAKE = (224, 70, 70)
+COLOR_RED_SNAKE_HEAD = (255, 151, 151)
+COLOR_RED_SNAKE_SHADOW = (55, 10, 10, 90)
 COLOR_FOOD = (230, 76, 70)
 COLOR_TEXT = (239, 247, 241)
 COLOR_TEXT_DIM = (148, 176, 154)
@@ -70,7 +73,24 @@ def create_background_surface():
     return surface
 
 
-def draw_snake(surface, snake, tick):
+def draw_snake(surface, snake, tick, palette="green"):
+    palettes = {
+        "green": {
+            "body": COLOR_SNAKE,
+            "head": COLOR_SNAKE_HEAD,
+            "shadow": COLOR_SNAKE_SHADOW,
+            "highlight": (220, 255, 230),
+            "eye": (18, 40, 22),
+        },
+        "red": {
+            "body": COLOR_RED_SNAKE,
+            "head": COLOR_RED_SNAKE_HEAD,
+            "shadow": COLOR_RED_SNAKE_SHADOW,
+            "highlight": (255, 224, 224),
+            "eye": (70, 18, 18),
+        },
+    }
+    colors = palettes[palette]
     radius = CELL_SIZE // 2 - 3
     shadow_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
 
@@ -86,7 +106,7 @@ def draw_snake(surface, snake, tick):
             shadow_center[0],
             shadow_center[1],
             radius,
-            COLOR_SNAKE_SHADOW,
+            colors["shadow"],
         )
 
     surface.blit(shadow_surface, (0, 0))
@@ -99,13 +119,13 @@ def draw_snake(surface, snake, tick):
         )
         pulse = (math.sin((tick / 180) + real_index * 0.55) + 1) * 0.5
         if real_index == 0:
-            color = COLOR_SNAKE_HEAD
+            color = colors["head"]
             this_radius = radius + 1
         else:
             color = (
-                min(255, int(COLOR_SNAKE[0] + pulse * 18)),
-                min(255, int(COLOR_SNAKE[1] + pulse * 12)),
-                min(255, int(COLOR_SNAKE[2] + pulse * 6)),
+                min(255, int(colors["body"][0] + pulse * 18)),
+                min(255, int(colors["body"][1] + pulse * 12)),
+                min(255, int(colors["body"][2] + pulse * 6)),
             )
             this_radius = max(7, radius - min(3, real_index // 5))
 
@@ -113,13 +133,13 @@ def draw_snake(surface, snake, tick):
         gfxdraw.aacircle(surface, center[0], center[1], this_radius, color)
 
         highlight = (center[0] - this_radius // 3, center[1] - this_radius // 3)
-        gfxdraw.filled_circle(surface, highlight[0], highlight[1], max(2, this_radius // 3), (220, 255, 230))
+        gfxdraw.filled_circle(surface, highlight[0], highlight[1], max(2, this_radius // 3), colors["highlight"])
 
         if real_index == 0:
             eye_offset_x = 4
             eye_offset_y = 5
             for eye_x in (-eye_offset_x, eye_offset_x):
-                gfxdraw.filled_circle(surface, center[0] + eye_x, center[1] - eye_offset_y, 2, (18, 40, 22))
+                gfxdraw.filled_circle(surface, center[0] + eye_x, center[1] - eye_offset_y, 2, colors["eye"])
 
 
 def draw_food(surface, food, tick):
@@ -141,7 +161,7 @@ def draw_food(surface, food, tick):
     pygame.draw.ellipse(surface, (255, 203, 203), (center[0] - 7, center[1] - 7, 6, 8))
 
 
-def draw_hud(surface, score, best_score, speed, state):
+def draw_hud(surface, game, speed):
     panel = pygame.Surface((SCREEN_WIDTH - 24, HUD_HEIGHT - 18), pygame.SRCALPHA)
     pygame.draw.rect(panel, COLOR_PANEL, panel.get_rect(), border_radius=18)
     pygame.draw.rect(panel, COLOR_PANEL_BORDER, panel.get_rect(), width=2, border_radius=18)
@@ -150,17 +170,28 @@ def draw_hud(surface, score, best_score, speed, state):
     row_y_top = BOARD_HEIGHT + 18
     row_y_bottom = BOARD_HEIGHT + 50
     draw_text(surface, "Snakey", 26, 28, row_y_top, color=COLOR_TEXT, bold=True)
-    draw_text(surface, f"Score {score}", 23, 28, row_y_bottom, color=COLOR_ACCENT, bold=True)
-    draw_text(surface, f"Best {best_score}", 21, 180, row_y_bottom, color=COLOR_TEXT)
-    draw_text(surface, f"Speed {speed}", 21, 308, row_y_bottom, color=COLOR_TEXT)
-    draw_text(surface, f"Length {score + 3}", 21, 418, row_y_bottom, color=COLOR_TEXT)
-
-    state_text = {
-        "menu": "Menu  |  SPACE resume/start  |  R new game  |  1/2/3 difficulty",
-        "playing": "WASD/arrows move  |  P pause  |  eat apples and avoid crashing",
-        "paused": "Paused  |  SPACE to continue",
-        "game_over": "Game Over  |  ESC menu  |  R restart",
-    }[state]
+    if game.mode == "classic":
+        draw_text(surface, f"Score {game.score}", 23, 28, row_y_bottom, color=COLOR_ACCENT, bold=True)
+        draw_text(surface, f"Best {game.best_score}", 21, 180, row_y_bottom, color=COLOR_TEXT)
+        draw_text(surface, f"Speed {speed}", 21, 308, row_y_bottom, color=COLOR_TEXT)
+        draw_text(surface, f"Length {game.score + 3}", 21, 418, row_y_bottom, color=COLOR_TEXT)
+        state_text = {
+            "menu": "Classic  |  C classic  |  V VS  |  SPACE resume/start  |  R new game  |  1/2/3 difficulty",
+            "playing": "Classic  |  WASD/arrows move  |  P pause",
+            "paused": "Classic paused  |  SPACE to continue",
+            "game_over": "Classic game over  |  ESC menu  |  R restart",
+        }[game.state]
+    else:
+        draw_text(surface, "VS Mode", 23, 28, row_y_bottom, color=COLOR_ACCENT, bold=True)
+        draw_text(surface, f"Time {game.vs_survival_time:.1f}s", 21, 160, row_y_bottom, color=COLOR_TEXT)
+        draw_text(surface, f"Red {len(game.vs_red_snake)}", 21, 318, row_y_bottom, color=COLOR_RED_SNAKE_HEAD)
+        draw_text(surface, f"Green {len(game.vs_green_snake)}", 21, 436, row_y_bottom, color=COLOR_SNAKE_HEAD)
+        state_text = {
+            "menu": "VS  |  C classic  |  V VS  |  SPACE resume/start  |  R new match",
+            "playing": "VS  |  Red: arrows  |  Green: left click turn left, right click turn right",
+            "paused": "VS paused  |  SPACE to continue",
+            "game_over": "VS ended  |  ESC menu  |  R restart",
+        }[game.state]
     state_img = _font(18).render(state_text, True, COLOR_TEXT_DIM)
     state_rect = state_img.get_rect(topright=(SCREEN_WIDTH - 28, row_y_top + 4))
     surface.blit(state_img, state_rect)
