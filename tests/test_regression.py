@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch
 
-from snake_game import rotate_left, rotate_right
-from snake_session import (
+from src.snake_game import rotate_left, rotate_right
+from src.snake_session import (
     build_game_state,
     generate_obstacles,
     interpolated_snake,
@@ -47,7 +47,7 @@ class GameStateTests(unittest.TestCase):
 
     def test_vs_mode_food_avoids_both_snakes(self):
         forced_food = (3, 4)
-        with patch("snake_session.random_food_position", return_value=forced_food) as random_food:
+        with patch("src.snake_session.random_food_position", return_value=forced_food) as random_food:
             game = build_game_state(mode="vs")
 
         self.assertEqual(game.food, forced_food)
@@ -77,7 +77,7 @@ class ProgressionHelpersTests(unittest.TestCase):
         blocked = {(20, 20)}
 
         with patch(
-            "snake_session.random_open_cell",
+            "src.snake_session.random_open_cell",
             side_effect=[(10, 11), (15, 10), (20, 20), (3, 3), (7, 7)],
         ):
             obstacles = generate_obstacles(2, snake, food, blocked=blocked)
@@ -89,11 +89,11 @@ class ProgressionHelpersTests(unittest.TestCase):
         food = (5, 5)
         obstacles = [(7, 7)]
 
-        with patch("snake_session.random_open_cell", return_value=(4, 4)):
+        with patch("src.snake_session.random_open_cell", return_value=(4, 4)):
             power_up, power_up_type = maybe_spawn_power_up(snake, food, obstacles, 3, "")
         self.assertEqual((power_up, power_up_type), ((4, 4), "speed_boost"))
 
-        with patch("snake_session.random_open_cell", return_value=(6, 6)):
+        with patch("src.snake_session.random_open_cell", return_value=(6, 6)):
             power_up, power_up_type = maybe_spawn_power_up(snake, food, obstacles, 6, "")
         self.assertEqual((power_up, power_up_type), ((6, 6), "slow_time"))
 

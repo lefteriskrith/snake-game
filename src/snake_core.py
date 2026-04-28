@@ -71,6 +71,17 @@ THEME_VISUALS = {
     },
 }
 
+MENU_CARD_SPECS = [
+    ("classic", "Classic", "Eat apples and grow", "Speed rises with score", "WASD / arrows"),
+    ("obstacles", "Obstacles", "Rocks fill the arena", "Power-ups help survival", "Avoid walls and rocks"),
+    ("vs", "VS Duel", "Red uses arrow keys", "Green uses mouse turns", "Fast local battle"),
+]
+
+MENU_CARD_WIDTH = 260
+MENU_CARD_HEIGHT = 172
+MENU_CARD_TOP = 152
+MENU_CARD_GAP = 22
+
 
 def _font(size, bold=False):
     return pygame.font.SysFont("arialroundedmtbold", size, bold=bold)
@@ -79,6 +90,68 @@ def _font(size, bold=False):
 def draw_text(surface, text, size, x, y, color=COLOR_TEXT, bold=False):
     text_img = _font(size, bold=bold).render(text, True, color)
     surface.blit(text_img, (x, y))
+    return text_img.get_rect(topleft=(x, y))
+
+
+def draw_text_fit(surface, text, size, x, y, max_width, color=COLOR_TEXT, bold=False, min_size=12):
+    fitted_size = size
+    font = _font(fitted_size, bold=bold)
+    while fitted_size > min_size and font.size(text)[0] > max_width:
+        fitted_size -= 1
+        font = _font(fitted_size, bold=bold)
+
+    fitted_text = text
+    if font.size(fitted_text)[0] > max_width:
+        while fitted_text and font.size(f"{fitted_text}...")[0] > max_width:
+            fitted_text = fitted_text[:-1]
+        fitted_text = f"{fitted_text}..." if fitted_text else ""
+
+    text_img = font.render(fitted_text, True, color)
+    surface.blit(text_img, (x, y))
+    return text_img.get_rect(topleft=(x, y))
+
+
+def _menu_card_left():
+    total_width = len(MENU_CARD_SPECS) * MENU_CARD_WIDTH + (len(MENU_CARD_SPECS) - 1) * MENU_CARD_GAP
+    return (SCREEN_WIDTH - total_width) // 2
+
+
+def menu_card_rect(index):
+    x = _menu_card_left() + index * (MENU_CARD_WIDTH + MENU_CARD_GAP)
+    return pygame.Rect(x, MENU_CARD_TOP - 8, MENU_CARD_WIDTH, MENU_CARD_HEIGHT + 16)
+
+
+def menu_theme_rect():
+    return pygame.Rect(452, 384, 164, 34)
+
+
+def menu_difficulty_rects():
+    labels = ("easy", "medium", "hard")
+    return {difficulty: pygame.Rect(142 + index * 112, 433, 100, 32) for index, difficulty in enumerate(labels)}
+
+
+def menu_start_rect():
+    return pygame.Rect(SCREEN_WIDTH - 244, 433, 146, 32)
+
+
+def menu_reset_rect():
+    return pygame.Rect(SCREEN_WIDTH - 88, 433, 48, 32)
+
+
+def menu_action_at(pos):
+    for index, (mode_key, *_unused) in enumerate(MENU_CARD_SPECS):
+        if menu_card_rect(index).collidepoint(pos):
+            return ("mode", mode_key)
+    if menu_theme_rect().collidepoint(pos):
+        return ("theme", None)
+    for difficulty, rect in menu_difficulty_rects().items():
+        if rect.collidepoint(pos):
+            return ("difficulty", difficulty)
+    if menu_start_rect().collidepoint(pos):
+        return ("start", None)
+    if menu_reset_rect().collidepoint(pos):
+        return ("reset", None)
+    return None
 
 
 def random_food_position(snake, blocked=None):
@@ -355,47 +428,119 @@ def draw_menu_overlay(surface, game):
     surface.blit(overlay, (0, 0))
 
     title_offset = math.sin(game.tick / 18) * 4
-    draw_text(surface, "Snakey", 54, 36, 42 + int(title_offset), color=COLOR_TEXT, bold=True)
-    draw_text(surface, "Arcade remix: themes, power-ups, VS and obstacle runs", 21, 40, 100, color=COLOR_TEXT_DIM)
+    draw_text(surface, "Snakey", 58, 36, 36 + int(title_offset), color=COLOR_TEXT, bold=True)
+    draw_text(surface, "Arcade remix: themes, power-ups, VS and obstacle runs", 23, 40, 98, color=COLOR_TEXT_DIM)
 
-    card_specs = [
-        ("classic", "Classic", "Pure run with difficulty scaling", "WASD or arrows"),
-        ("obstacles", "Obstacles", "Rocks grow in as your score climbs", "Power-ups enabled"),
-        ("vs", "VS Duel", "Red arrows vs green mouse turns", "Fast local battle"),
-    ]
-    card_width = 188
-    card_height = 180
-    top = 160
-    left = 32
-    gap = 18
-    for index, (mode_key, title, line_one, line_two) in enumerate(card_specs):
-        x = left + index * (card_width + gap)
+    for index, (mode_key, title, line_one, line_two, line_three) in enumerate(MENU_CARD_SPECS):
+        x = _menu_card_left() + index * (MENU_CARD_WIDTH + MENU_CARD_GAP)
         selected = game.menu_card_index == index
         active = game.mode == mode_key
         pulse = 0
         if selected:
             pulse = math.sin(game.tick / 14 + index) * 5
-        rect = pygame.Rect(x, top + int(pulse), card_width, card_height)
+        rect = pygame.Rect(x, MENU_CARD_TOP + int(pulse), MENU_CARD_WIDTH, MENU_CARD_HEIGHT)
         fill = (15, 20, 28, 228) if not selected else colors["panel"]
         border = colors["border"] if (selected or active) else (78, 90, 102)
-        pygame.draw.rect(surface, fill, rect, border_radius=22)
-        pygame.draw.rect(surface, border, rect, width=3 if selected else 2, border_radius=22)
+        pygame.draw.rect(surface, fill, rect, border_radius=8)
+        pygame.draw.rect(surface, border, rect, width=3 if selected else 2, border_radius=8)
         if active:
-            ribbon = pygame.Rect(rect.x + 14, rect.y + 14, 72, 26)
-            pygame.draw.rect(surface, colors["accent"], ribbon, border_radius=13)
-            draw_text(surface, "ACTIVE", 16, ribbon.x + 10, ribbon.y + 3, color=(18, 26, 30), bold=True)
-        draw_text(surface, title, 30, rect.x + 18, rect.y + 54, color=COLOR_TEXT, bold=True)
-        draw_text(surface, line_one, 18, rect.x + 18, rect.y + 98, color=COLOR_TEXT_DIM)
-        draw_text(surface, line_two, 18, rect.x + 18, rect.y + 124, color=COLOR_TEXT_DIM)
+            ribbon = pygame.Rect(rect.x + 18, rect.y + 16, 90, 28)
+            pygame.draw.rect(surface, colors["accent"], ribbon, border_radius=8)
+            draw_text(surface, "ACTIVE", 17, ribbon.x + 12, ribbon.y + 3, color=(18, 26, 30), bold=True)
+        text_x = rect.x + 22
+        text_width = MENU_CARD_WIDTH - 44
+        draw_text_fit(surface, title, 31, text_x, rect.y + 54, text_width, color=COLOR_TEXT, bold=True)
+        draw_text_fit(surface, line_one, 21, text_x, rect.y + 92, text_width, color=COLOR_TEXT_DIM, min_size=16)
+        draw_text_fit(surface, line_two, 21, text_x, rect.y + 118, text_width, color=COLOR_TEXT_DIM, min_size=16)
+        draw_text_fit(surface, line_three, 20, text_x, rect.y + 143, 120, color=COLOR_TEXT_DIM, min_size=15)
         footer = "SPACE to launch" if selected else "Use left/right"
-        draw_text(surface, footer, 18, rect.x + 18, rect.y + 150, color=colors["accent"])
+        draw_text_fit(surface, footer, 19, text_x + 126, rect.y + 143, text_width - 126, color=colors["accent"], bold=selected)
 
-    theme_box = pygame.Rect(40, 380, 548, 88)
-    pygame.draw.rect(surface, (10, 16, 24, 220), theme_box, border_radius=20)
-    pygame.draw.rect(surface, colors["border"], theme_box, width=2, border_radius=20)
-    draw_text(surface, "Theme", 26, theme_box.x + 20, theme_box.y + 18, color=COLOR_TEXT, bold=True)
-    draw_text(surface, f"{game.current_theme().label} arena", 24, theme_box.x + 140, theme_box.y + 20, color=colors["accent"], bold=True)
-    draw_text(surface, "T cycles themes, 1/2/3 changes difficulty, ENTER/SPACE starts, R resets", 18, theme_box.x + 20, theme_box.y + 52, color=COLOR_TEXT_DIM)
+    theme_box = pygame.Rect(36, 370, SCREEN_WIDTH - 72, 118)
+    pygame.draw.rect(surface, (10, 16, 24, 226), theme_box, border_radius=8)
+    pygame.draw.rect(surface, colors["border"], theme_box, width=2, border_radius=8)
+    draw_text(surface, "Theme", 29, theme_box.x + 24, theme_box.y + 18, color=COLOR_TEXT, bold=True)
+    draw_text_fit(
+        surface,
+        f"{game.current_theme().label} arena",
+        28,
+        theme_box.x + 170,
+        theme_box.y + 19,
+        theme_box.width - 194,
+        color=colors["accent"],
+        bold=True,
+    )
+    theme_button = menu_theme_rect()
+    pygame.draw.rect(surface, colors["accent"], theme_button, border_radius=8)
+    draw_text_fit(
+        surface,
+        "T  Change theme",
+        19,
+        theme_button.x + 12,
+        theme_button.y + 5,
+        theme_button.width - 24,
+        color=(18, 26, 30),
+        bold=True,
+        min_size=15,
+    )
+    mode_labels = {"classic": "Classic", "obstacles": "Obstacles", "vs": "VS Duel"}
+    draw_text_fit(
+        surface,
+        f"Difficulty: {game.current_settings().label}   |   Selected mode: {mode_labels.get(game.mode, game.mode.title())}",
+        21,
+        theme_box.x + 24,
+        theme_box.y + 58,
+        theme_box.width - 48,
+        color=COLOR_TEXT,
+        bold=True,
+        min_size=17,
+    )
+    draw_text(surface, "Difficulty", 20, theme_box.x + 24, theme_box.y + 87, color=COLOR_TEXT_DIM, bold=True)
+    difficulty_labels = {"easy": "1 Easy", "medium": "2 Medium", "hard": "3 Hard"}
+    for difficulty, rect in menu_difficulty_rects().items():
+        selected = game.difficulty == difficulty
+        button_fill = colors["accent"] if selected else (18, 27, 38)
+        button_text = (18, 26, 30) if selected else COLOR_TEXT
+        pygame.draw.rect(surface, button_fill, rect, border_radius=8)
+        pygame.draw.rect(surface, colors["border"], rect, width=2, border_radius=8)
+        draw_text_fit(
+            surface,
+            difficulty_labels[difficulty],
+            18,
+            rect.x + 10,
+            rect.y + 5,
+            rect.width - 20,
+            color=button_text,
+            bold=selected,
+            min_size=14,
+        )
+    for rect, label, width in (
+        (menu_start_rect(), "SPACE  Start", 122),
+        (menu_reset_rect(), "R", 24),
+    ):
+        pygame.draw.rect(surface, (18, 27, 38), rect, border_radius=8)
+        pygame.draw.rect(surface, colors["accent"], rect, width=2, border_radius=8)
+        draw_text_fit(
+            surface,
+            label,
+            18,
+            rect.x + 12,
+            rect.y + 5,
+            width,
+            color=colors["accent"],
+            bold=True,
+            min_size=14,
+        )
+    draw_text_fit(
+        surface,
+        "Click the buttons or use the matching keyboard shortcuts.",
+        18,
+        theme_box.x + 596,
+        theme_box.y + 14,
+        190,
+        color=COLOR_TEXT_DIM,
+        min_size=13,
+    )
 
 
 def check_wall_collision(pos):

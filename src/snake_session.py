@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass, field
 
-from snake_core import BASE_FPS, GRID_HEIGHT, GRID_WIDTH, MAX_FPS, random_food_position
+from .snake_core import BASE_FPS, GRID_HEIGHT, GRID_WIDTH, MAX_FPS, random_food_position
 
 
 @dataclass(frozen=True)
@@ -32,7 +32,7 @@ class GameState:
     difficulty: str = "easy"
     menu_resume_available: bool = False
     mode: str = "classic"
-    theme: str = "forest"
+    theme: str = "neon"
     vs_red_snake: list[tuple[int, int]] = field(default_factory=list)
     vs_red_direction: tuple[int, int] = (1, 0)
     vs_red_pending_direction: tuple[int, int] = (1, 0)
@@ -144,6 +144,8 @@ def generate_obstacles(count, snake, food, blocked=None):
     obstacles = []
     while len(obstacles) < count:
         pos = random_open_cell(blocked_cells)
+        if pos in blocked_cells:
+            continue
         if pos in obstacles:
             continue
         neighbors = abs(pos[0] - snake[0][0]) + abs(pos[1] - snake[0][1])
@@ -161,11 +163,17 @@ def maybe_spawn_power_up(snake, food, obstacles, score, active_power_up, current
     return random_open_cell(snake, {food}, obstacles), power_up_type
 
 
-def build_game_state(difficulty="easy", best_score=0, mode="classic", theme="forest"):
-    snake, direction, food, score, pending_direction, move_timer = start_new_run()
+def build_game_state(difficulty="easy", best_score=0, mode="classic", theme="neon"):
     red_snake, red_direction, green_snake, green_direction = reset_vs_game()
     if mode == "vs":
+        snake = [(10, 12), (9, 12), (8, 12)]
+        direction = (1, 0)
         food = random_food_position(red_snake, blocked=set(green_snake))
+        score = 0
+        pending_direction = direction
+        move_timer = 0.0
+    else:
+        snake, direction, food, score, pending_direction, move_timer = start_new_run()
     obstacle_mode = mode == "obstacles"
     obstacles = generate_obstacles(3, snake, food) if obstacle_mode else []
     return GameState(

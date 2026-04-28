@@ -1,12 +1,13 @@
 import pygame
 import sys
-from snake_core import (
+from .snake_core import (
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
     random_food_position,
     draw_snake,
     draw_food,
     draw_hud,
+    menu_action_at,
     draw_overlay,
     create_background_surface,
     check_wall_collision,
@@ -15,8 +16,8 @@ from snake_core import (
     draw_power_up,
     draw_particles,
 )
-from snake_audio import play_sound, setup_audio, start_music
-from snake_session import (
+from .snake_audio import play_sound, setup_audio, start_music
+from .snake_session import (
     MODE_ORDER,
     POWER_UP_DURATION,
     THEME_ORDER,
@@ -145,14 +146,12 @@ def main():
                         game.mode = "obstacles"
                         game.menu_card_index = MODE_ORDER.index("obstacles")
                         game.menu_resume_available = False
-                    elif event.key == pygame.K_1 and game.mode == "classic":
+                    elif event.key == pygame.K_1:
                         game.difficulty = "easy"
-                    elif event.key == pygame.K_2 and game.mode in ("classic", "obstacles"):
+                    elif event.key == pygame.K_2:
                         game.difficulty = "medium"
-                    elif event.key == pygame.K_3 and game.mode in ("classic", "obstacles"):
+                    elif event.key == pygame.K_3:
                         game.difficulty = "hard"
-                    elif event.key == pygame.K_1 and game.mode == "obstacles":
-                        game.difficulty = "easy"
                     elif event.key == pygame.K_LEFT:
                         game.menu_card_index = (game.menu_card_index - 1) % len(MODE_ORDER)
                         game.mode = MODE_ORDER[game.menu_card_index]
@@ -243,6 +242,35 @@ def main():
                         if game.vs_red_pending_direction != (1, 0):
                             play_sound(audio, "turn")
                         game.vs_red_pending_direction = (1, 0)
+            if event.type == pygame.MOUSEBUTTONDOWN and game.state == "menu" and event.button == 1:
+                action = menu_action_at(event.pos)
+                if action:
+                    action_type, value = action
+                    if action_type == "mode":
+                        game.mode = value
+                        game.menu_card_index = MODE_ORDER.index(value)
+                        game.menu_resume_available = False
+                    elif action_type == "difficulty":
+                        game.difficulty = value
+                    elif action_type == "theme":
+                        game.theme = cycle_value(THEME_ORDER, game.theme, 1)
+                    elif action_type == "reset":
+                        game = build_game_state(game.difficulty, game.best_score, game.mode, game.theme)
+                        game.state = "playing"
+                        game.menu_resume_available = True
+                        start_music(audio)
+                    elif action_type == "start":
+                        if not game.menu_resume_available:
+                            game = build_game_state(game.difficulty, game.best_score, game.mode, game.theme)
+                        game.state = "playing"
+                        if audio.get("enabled"):
+                            if game.menu_resume_available:
+                                audio["music_channel"].unpause()
+                            else:
+                                start_music(audio)
+                        game.menu_resume_available = True
+                continue
+
             if event.type == pygame.MOUSEBUTTONDOWN and game.mode == "vs" and game.state == "playing":
                 if event.button == 1:
                     game.vs_green_pending_direction = rotate_left(game.vs_green_direction)
