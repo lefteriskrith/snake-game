@@ -16,11 +16,11 @@ A polished arcade Snake game built with Python and pygame — featuring three di
 
 | Menu | Classic Mode |
 |------|-------------|
-| ![Menu](screenshots/menu.png) | ![Classic](screenshots/classic.png) |
+| ![Menu](screenshots/8.png) | ![Classic](screenshots/classic.png) |
 
 | Obstacles Mode | VS Duel |
 |----------------|---------|
-| ![Obstacles](screenshots/obstacles.png) | ![VS](screenshots/vs.png) |
+| ![Obstacles](screenshots/obstacles.png) | ![VS Duel](screenshots/9.png) |
 
 ---
 

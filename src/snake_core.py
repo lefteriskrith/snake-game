@@ -122,20 +122,20 @@ def menu_card_rect(index):
 
 
 def menu_theme_rect():
-    return pygame.Rect(452, 384, 164, 34)
+    return pygame.Rect(446, 402, 164, 32)
 
 
 def menu_difficulty_rects():
     labels = ("easy", "medium", "hard")
-    return {difficulty: pygame.Rect(142 + index * 112, 433, 100, 32) for index, difficulty in enumerate(labels)}
+    return {difficulty: pygame.Rect(206 + index * 112, 448, 100, 32) for index, difficulty in enumerate(labels)}
 
 
 def menu_start_rect():
-    return pygame.Rect(SCREEN_WIDTH - 244, 433, 146, 32)
+    return pygame.Rect(0, 0, 0, 0)
 
 
 def menu_reset_rect():
-    return pygame.Rect(SCREEN_WIDTH - 88, 433, 48, 32)
+    return pygame.Rect(0, 0, 0, 0)
 
 
 def menu_action_at(pos):
@@ -483,19 +483,7 @@ def draw_menu_overlay(surface, game):
         bold=True,
         min_size=15,
     )
-    mode_labels = {"classic": "Classic", "obstacles": "Obstacles", "vs": "VS Duel"}
-    draw_text_fit(
-        surface,
-        f"Difficulty: {game.current_settings().label}   |   Selected mode: {mode_labels.get(game.mode, game.mode.title())}",
-        21,
-        theme_box.x + 24,
-        theme_box.y + 58,
-        theme_box.width - 48,
-        color=COLOR_TEXT,
-        bold=True,
-        min_size=17,
-    )
-    draw_text(surface, "Difficulty", 20, theme_box.x + 24, theme_box.y + 87, color=COLOR_TEXT_DIM, bold=True)
+    draw_text(surface, "Difficulty", 22, theme_box.x + 24, theme_box.y + 64, color=COLOR_TEXT_DIM, bold=True)
     difficulty_labels = {"easy": "1 Easy", "medium": "2 Medium", "hard": "3 Hard"}
     for difficulty, rect in menu_difficulty_rects().items():
         selected = game.difficulty == difficulty
@@ -514,32 +502,16 @@ def draw_menu_overlay(surface, game):
             bold=selected,
             min_size=14,
         )
-    for rect, label, width in (
-        (menu_start_rect(), "SPACE  Start", 122),
-        (menu_reset_rect(), "R", 24),
-    ):
-        pygame.draw.rect(surface, (18, 27, 38), rect, border_radius=8)
-        pygame.draw.rect(surface, colors["accent"], rect, width=2, border_radius=8)
-        draw_text_fit(
-            surface,
-            label,
-            18,
-            rect.x + 12,
-            rect.y + 5,
-            width,
-            color=colors["accent"],
-            bold=True,
-            min_size=14,
-        )
     draw_text_fit(
         surface,
-        "Click the buttons or use the matching keyboard shortcuts.",
+        "SPACE starts/resumes    |    R restarts the run",
         18,
-        theme_box.x + 596,
-        theme_box.y + 14,
-        190,
+        theme_box.x + 548,
+        theme_box.y + 70,
+        250,
         color=COLOR_TEXT_DIM,
-        min_size=13,
+        bold=True,
+        min_size=14,
     )
 
 
